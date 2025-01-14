@@ -5,6 +5,7 @@ pkgs.mkShell {
         python3
         python3Packages.pip
         python3Packages.virtualenv
+        python3Packages.black
         stdenv.cc
         gnupg libGL libGLU zlib
     ];
