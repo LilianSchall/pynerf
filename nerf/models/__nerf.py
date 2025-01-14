@@ -47,10 +47,12 @@ class NeRF(nn.Module):
         else:
             self.output_linear = nn.Linear(W, output_channel)
 
-    def forward(self, x: torch.Tensor)-> torch.Tensor:
-        inputs_pts, input_views = torch.split(x, [self.input_channel, self.input_channel_views], dim=-1)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        inputs_pts, input_views = torch.split(
+            x, [self.input_channel, self.input_channel_views], dim=-1
+        )
 
-        h : torch.Tensor = inputs_pts
+        h: torch.Tensor = inputs_pts
 
         for i, l in enumerate(self.pts_linears):
             h = F.relu(l(h))
@@ -58,17 +60,16 @@ class NeRF(nn.Module):
                 h = torch.cat([inputs_pts, h], -1)
 
         if self.use_viewdirs:
-            alpha = self.alpha_linear(h) #type: ignore
-            feature = self.feature_linear(h) #type: ignore
+            alpha = self.alpha_linear(h)  # type: ignore
+            feature = self.feature_linear(h)  # type: ignore
             h = torch.cat([feature, input_views], -1)
 
             for i, l in enumerate(self.views_linears):
                 h = F.relu(l(h))
 
-            rgb = self.rgb_linear(h) #type: ignore
+            rgb = self.rgb_linear(h)  # type: ignore
             outputs = torch.cat([rgb, alpha], -1)
         else:
-            outputs = self.output_linear(h) #type: ignore
+            outputs = self.output_linear(h)  # type: ignore
 
         return outputs
-

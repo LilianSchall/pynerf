@@ -6,6 +6,7 @@ class RayGenerator:
     """
     Ray generator class to generate rays in camera space and normalized device coordinates (NDC).
     """
+
     def __init__(self) -> None:
         pass
 
