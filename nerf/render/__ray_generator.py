@@ -17,10 +17,10 @@ class RayGenerator:
         Generate rays in camera space.
 
         Args:
-            H (int): Height of the image.
-            W (int): Width of the image.
-            K (np.ndarray): Camera intrinsics.
-            c2w (torch.Tensor): Camera-to-world matrix.
+            @param H (int): Height of the image.
+            @param W (int): Width of the image.
+            @param K (np.ndarray): Camera intrinsics.
+            @param c2w (torch.Tensor): Camera-to-world matrix.
         """
         i, j = torch.meshgrid(torch.linspace(0, W - 1, W), torch.linspace(0, H - 1, H))
         i, j = i.t(), j.t()
