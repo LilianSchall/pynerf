@@ -25,7 +25,7 @@ class Renderer:
         rays: torch.Tensor | None = None,
         chunk: int = 1024 * 32,
         c2w: torch.Tensor | None = None,
-        ndc: bool = True,
+        ndc: bool = False,
         near: float = 0.0,
         far: float = 1.0,
         c2w_staticcam=None,

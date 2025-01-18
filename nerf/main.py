@@ -29,7 +29,7 @@ def main(config: Config) -> None:
     renderer: Renderer = Renderer(model=model)
     dataset: BlenderDataset = BlenderDataset(
         root_dir=config.data_dir,
-        dataset_type="test",
+        dataset_type="train",
         white_bkgd=config.white_bkgd,
         half_res=config.half_res,
     )

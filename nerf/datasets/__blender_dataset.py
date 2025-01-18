@@ -86,9 +86,10 @@ class BlenderDataset(Dataset):
             # TODO: see if you can requires_grad = False
             self.poses.append(torch.Tensor(frame["transform_matrix"]).float())  # type: ignore
 
-        self.H, self.W = self.images[0].shape[:2]
+        self.H, self.W = self.images[0].shape[-2:]
         print(f"Shape of image: {self.images[0].shape}")
         print(f"H = {self.H}, W = {self.W}")
+        print(f"Shape of pose: {self.poses[0].shape}")
         camera_angle_x = meta["camera_angle_x"]
         self.focal = 0.5 * self.W / np.tan(0.5 * camera_angle_x)
 
@@ -97,11 +98,15 @@ class BlenderDataset(Dataset):
             pose_spherical_to_cartesian(angle, -30.0, 4.0)
             for angle in np.linspace(-180, 180, 40 + 1)[:-1]
         ]
+        print(f"Nb render poses: {len(self.render_poses)}")
+        print(f"Shape of render pose: {self.render_poses[0].shape}")
 
         if half_res:
             self.H //= 2
             self.W //= 2
             self.focal /= 2.0
+
+            print(f"Half resolution needed: H = {self.H}, W = {self.W}, focal = {self.focal}") 
 
             imgs_half_res = []
             for img in self.images:
@@ -113,9 +118,9 @@ class BlenderDataset(Dataset):
 
         for i in range(len(self.images)):
             if white_bkgd:
-                self.images[i] = self.images[i][..., :3] * self.images[i][..., -1:] + (1.0 - self.images[i][..., -1:])
+                self.images[i] = self.images[i][:3, ...] * self.images[i][-1:, ...] + (1.0 - self.images[i][-1:, ...])
             else:
-                self.images[i] = self.images[i][..., :3]
+                self.images[i] = self.images[i][:3, ...]
 
         self.index = 0
 
