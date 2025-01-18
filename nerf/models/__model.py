@@ -30,8 +30,6 @@ class Model:
         multires: int,
         net_depth: int,
         net_width: int,
-        input_channel: int,
-        output_channel: int,
         use_viewdirs: bool,
         learning_rate: float,
         multires_views: int | None = None,
@@ -59,6 +57,9 @@ class Model:
 
         if use_viewdirs and multires_views is not None:
             self.embedder_views = Embedder(3, multires_views - 1, multires_views, True)
+
+        input_channel = self.embedder.out_dim
+        output_channel = 5 if n_importance > 0 else 4
 
         self.model = NeRF(
             D=net_depth,
