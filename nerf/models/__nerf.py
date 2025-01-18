@@ -10,10 +10,11 @@ class NeRF(nn.Module):
     skips: list[int]
     use_viewdirs: bool
     pts_linears: nn.ModuleList
-    feature_linear: nn.Linear | None = None
-    alpha_linear: nn.Linear | None = None
-    rgb_linear: nn.Linear | None = None
-    output_linear: nn.Linear | None = None
+    views_linears: nn.ModuleList
+    feature_linear: nn.Linear | None
+    alpha_linear: nn.Linear | None
+    rgb_linear: nn.Linear | None
+    output_linear: nn.Linear | None
 
     def __init__(
         self,
@@ -25,6 +26,7 @@ class NeRF(nn.Module):
         skips=[4],
         use_viewdirs=True,
     ):
+        print(f"will alpha linear be initialized?: {use_viewdirs}")
         super(NeRF, self).__init__()
         self.input_channel = input_channel
         self.input_channel_views = input_channel_views
@@ -39,6 +41,7 @@ class NeRF(nn.Module):
                 for i in range(D - 1)
             ]
         )
+        self.views_linears = nn.ModuleList([nn.Linear(self.input_channel_views + W, W // 2)])
 
         if use_viewdirs:
             self.feature_linear = nn.Linear(W, W)

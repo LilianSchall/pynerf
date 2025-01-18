@@ -7,28 +7,29 @@ import numpy as np
 import os
 import json
 
+# TODO: see if you can requires_grad = False
 __trans_t = lambda t: torch.Tensor(
-    [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, t], [0, 0, 0, 1]], requires_grad=False
+    [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, t], [0, 0, 0, 1]]
 ).float()  # type: ignore
 
+# TODO: see if you can requires_grad = False
 __rot_phi = lambda phi: torch.Tensor(
     [
         [1, 0, 0, 0],
-        [0, torch.cos(phi), -torch.sin(phi), 0],
-        [0, torch.sin(phi), torch.cos(phi), 0],
+        [0, np.cos(phi), -np.sin(phi), 0],
+        [0, np.sin(phi), np.cos(phi), 0],
         [0, 0, 0, 1],
-    ],
-    requires_grad=False,
+    ]
 ).float()  # type: ignore
 
+# TODO: see if you can requires_grad = False
 __rot_theta = lambda th: torch.Tensor(
     [
-        [torch.cos(th), 0, -torch.sin(th), 0],
+        [np.cos(th), 0, -np.sin(th), 0],
         [0, 1, 0, 0],
-        [torch.sin(th), 0, torch.cos(th), 0],
+        [np.sin(th), 0, np.cos(th), 0],
         [0, 0, 0, 1],
-    ],
-    requires_grad=False,
+    ]
 ).float()  # type: ignore
 
 
@@ -46,10 +47,10 @@ def pose_spherical_to_cartesian(
     camera2world: torch.Tensor = __trans_t(radius)
     camera2world = __rot_phi(phi / 180.0 * torch.pi) @ camera2world
     camera2world = __rot_theta(theta / 180.0 * torch.pi) @ camera2world
+    # TODO: see if you can requires_grad = False
     camera2world = (
         torch.Tensor(
             [[-1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]],
-            requires_grad=False,
         ).float()
         @ camera2world
     )  # type: ignore
@@ -72,7 +73,7 @@ class BlenderDataset(Dataset):
         self.near = 2.0
         self.far = 6.0
         with open(
-            os.path.join(root_dir, f"transforms_{dataset_type}.json", "r")
+            os.path.join(root_dir, f"transforms_{dataset_type}.json"), "r"
         ) as file:
             meta = json.load(file)
 
@@ -82,11 +83,12 @@ class BlenderDataset(Dataset):
         for frame in meta["frames"]:
             filename = os.path.join(root_dir, frame["file_path"] + ".png")
             self.images.append(read_image(filename) / 255.0)
-            self.poses.append(torch.Tensor(frame["transform_matrix"], requires_grad=False).float())  # type: ignore
+            # TODO: see if you can requires_grad = False
+            self.poses.append(torch.Tensor(frame["transform_matrix"]).float())  # type: ignore
 
         self.H, self.W = self.images[0].shape[-2:]
         camera_angle_x = meta["camera_angle_x"]
-        self.focal = 0.5 * self.W / torch.tan(0.5 * camera_angle_x).item()
+        self.focal = 0.5 * self.W / np.tan(0.5 * camera_angle_x)
 
         # I use numpy instead of torch because I don't want to load this data on the GPU
         self.render_poses = [

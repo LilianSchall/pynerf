@@ -105,11 +105,11 @@ class Model:
 
         if len(checkpoints) > 0:
             checkpoint = torch.load(checkpoints[-1])
-            self.model.load_state_dict(checkpoint["model_state_dict"])
+            self.model.load_state_dict(checkpoint["network_fn_state_dict"])
             self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
             if self.model_fine is not None:
-                self.model_fine.load_state_dict(checkpoint["model_fine_state_dict"])
+                self.model_fine.load_state_dict(checkpoint["network_fine_state_dict"])
 
     def batchify(self: "Model", embedded: torch.Tensor, netchunk: int) -> torch.Tensor:
         return torch.cat(
