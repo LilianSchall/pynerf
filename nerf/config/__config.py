@@ -46,7 +46,7 @@ class Config:
                             help='layers in fine network')
         parser.add_argument("--net_width_fine", type=int, default=256, 
                             help='channels per layer in fine network')
-        parser.add_argument("--N_rand", type=int, default=32*32*4, 
+        parser.add_argument("--n_rand", type=int, default=32*32*4, 
                             help='batch size (number of random rays per gradient step)')
         parser.add_argument("--learning_rate", type=float, default=5e-4, 
                             help='learning rate')

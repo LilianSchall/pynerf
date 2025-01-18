@@ -95,6 +95,8 @@ class Model:
             params=grad_vars, lr=learning_rate, betas=(0.9, 0.999)
         )
 
+        os.makedirs(os.path.join(base_dir, exp_name), exist_ok=True)
+
         checkpoints = [
             os.path.join(base_dir, exp_name, f)
             for f in sorted(os.listdir(os.path.join(base_dir, exp_name)))

@@ -1,3 +1,3 @@
 # datasets module
 
-from __blender_dataset import BlenderDataset
+from .__blender_dataset import BlenderDataset
