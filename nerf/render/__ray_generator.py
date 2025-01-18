@@ -79,9 +79,15 @@ class RayGenerator:
         rays_d = torch.stack([d0, d1, d2], -1)
 
         return rays_o, rays_d
-    
-    def sample_pdf(self, bins: torch.Tensor, weights: torch.Tensor, n_samples: int, deterministic: bool=False) -> torch.Tensor:
-        weights = weights + 1e-5 # in order to prevent nans
+
+    def sample_pdf(
+        self,
+        bins: torch.Tensor,
+        weights: torch.Tensor,
+        n_samples: int,
+        deterministic: bool = False,
+    ) -> torch.Tensor:
+        weights = weights + 1e-5  # in order to prevent nans
 
         pdf: torch.Tensor = weights / torch.sum(weights, -1, keepdim=True)
         cdf: torch.Tensor = torch.cumsum(pdf, -1)
@@ -96,14 +102,20 @@ class RayGenerator:
         u = u.contiguous()
         inds: torch.Tensor = torch.searchsorted(cdf, u, right=True)
         below: torch.Tensor = torch.max(torch.zeros_like(inds - 1), inds - 1)
-        above: torch.Tensor = torch.min((cdf.shape[-1] - 1) * torch.ones_like(inds), inds)
+        above: torch.Tensor = torch.min(
+            (cdf.shape[-1] - 1) * torch.ones_like(inds), inds
+        )
         inds_g: torch.Tensor = torch.stack([below, above], -1)
 
         matched_shape: list[int] = [inds_g.shape[0], inds_g.shape[1], cdf.shape[-1]]
-        cdf_g: torch.Tensor = torch.gather(cdf.unsqueeze(1).expand(matched_shape), 2, inds_g)
-        bins_g: torch.Tensor = torch.gather(bins.unsqueeze(1).expand(matched_shape), 2, inds_g)
+        cdf_g: torch.Tensor = torch.gather(
+            cdf.unsqueeze(1).expand(matched_shape), 2, inds_g
+        )
+        bins_g: torch.Tensor = torch.gather(
+            bins.unsqueeze(1).expand(matched_shape), 2, inds_g
+        )
 
-        denom = (cdf_g[..., 1] - cdf_g[..., 0])
+        denom = cdf_g[..., 1] - cdf_g[..., 0]
         denom = torch.where(denom < 1e-5, torch.ones_like(denom), denom)
 
         t = (u - cdf_g[..., 0]) / denom
@@ -111,5 +123,3 @@ class RayGenerator:
         samples: torch.Tensor = bins_g[..., 0] + t * (bins_g[..., 1] - bins_g[..., 0])
 
         return samples
-
-
