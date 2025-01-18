@@ -68,10 +68,12 @@ class BlenderDataset(Dataset):
     index: int
     near: float
     far: float
+    needs_ndc: bool
 
     def __init__(self, root_dir: str, dataset_type: str, white_bkgd: bool, half_res: bool = True) -> None:
         self.near = 2.0
         self.far = 6.0
+        self.needs_ndc = False
         with open(
             os.path.join(root_dir, f"transforms_{dataset_type}.json"), "r"
         ) as file:

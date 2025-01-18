@@ -25,7 +25,7 @@ class Renderer:
         rays: torch.Tensor | None = None,
         chunk: int = 1024 * 32,
         c2w: torch.Tensor | None = None,
-        ndc: bool = False,
+        with_ndc: bool = False,
         near: float = 0.0,
         far: float = 1.0,
         c2w_staticcam=None,
@@ -51,7 +51,7 @@ class Renderer:
 
         sh = rays_d.shape
 
-        if ndc:
+        if with_ndc:
             rays_o, rays_d = self.ray_generator.ndc_rays(
                 H, W, K[0][0], 1.0, rays_o, rays_d
             )
@@ -192,6 +192,7 @@ class Renderer:
         chunk: int,
         near: float,
         far: float,
+        with_ndc: bool,
         save_dir: str | None = None,
         render_factor: int = 0,
     ) -> tuple[np.ndarray, np.ndarray]:
@@ -205,7 +206,7 @@ class Renderer:
         disps: list[np.ndarray] = []
 
         for i, c2w in enumerate(tqdm(render_poses)):
-            render_list, _ = self.render(H, W, K, near=near, far=far, c2w=c2w[:3, :4], chunk=chunk)
+            render_list, _ = self.render(H, W, K, near=near, far=far, c2w=c2w[:3, :4], with_ndc=with_ndc, chunk=chunk)
             assert len(render_list) == 3
             rgb, disp, acc = render_list
 
