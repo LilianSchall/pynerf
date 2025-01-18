@@ -76,7 +76,7 @@ class BlenderDataset(torch.utils.data.Dataset):
 
         for frame in meta["frames"]:
             filename = os.path.join(root_dir, frame["file_path"] + ".png")
-            self.images.append(read_image(filename) / 255.)
+            self.images.append(read_image(filename) / 255.0)
             self.poses.append(torch.Tensor(frame["transform_matrix"], requires_grad=False).float())  # type: ignore
 
         self.H, self.W = self.images[0].shape[-2:]
@@ -96,18 +96,26 @@ class BlenderDataset(torch.utils.data.Dataset):
 
             imgs_half_res = []
             for img in self.images:
-                img = torch.nn.functional.interpolate(img.unsqueeze(0), (self.H, self.W))
+                img = torch.nn.functional.interpolate(
+                    img.unsqueeze(0), (self.H, self.W)
+                )
                 imgs_half_res.append(img.squeeze(0))
             self.images = imgs_half_res
 
         self.index = 0
 
-
     def __len__(self) -> int:
         return len(self.images)
 
-    def __item__(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, tuple[float, float, float]]:
-        t = self.images[self.index], self.poses[self.index], self.render_poses[self.index], (self.H, self.W, self.focal)
+    def __item__(
+        self,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, tuple[float, float, float]]:
+        t = (
+            self.images[self.index],
+            self.poses[self.index],
+            self.render_poses[self.index],
+            (self.H, self.W, self.focal),
+        )
         self.index = (self.index + 1) % len(self.images)
 
         return t
