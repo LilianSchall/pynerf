@@ -1,5 +1,6 @@
 import torch
 from torchvision.io import read_image
+from torch.utils.data import Dataset
 
 import numpy as np
 
@@ -56,16 +57,20 @@ def pose_spherical_to_cartesian(
     return camera2world
 
 
-class BlenderDataset(torch.utils.data.Dataset):
+class BlenderDataset(Dataset):
     images: list[torch.Tensor]
     poses: list[torch.Tensor]
-    H: float
-    W: float
+    H: int
+    W: int
     focal: float
     render_poses: list[torch.Tensor]
     index: int
+    near: float
+    far: float
 
     def __init__(self, root_dir: str, dataset_type: str, half_res: bool = True) -> None:
+        self.near = 2.0
+        self.far = 6.0
         with open(
             os.path.join(root_dir, f"transforms_{dataset_type}.json", "r")
         ) as file:

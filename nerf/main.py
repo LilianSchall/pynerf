@@ -1,6 +1,8 @@
 from nerf.config import Config
 from nerf.models import Model
 from nerf.render import Renderer
+from nerf.sessions import TestSession
+from nerf.datasets import BlenderDataset
 import torch
 
 def main(config: Config) -> None:
@@ -25,6 +27,23 @@ def main(config: Config) -> None:
     )
 
     renderer: Renderer = Renderer(model=model)
+    dataset: BlenderDataset = BlenderDataset(
+        root_dir=config.data_dir,
+        dataset_type="test",
+        half_res=config.half_res,
+    )
+
+    if config.train:
+        pass
+    else:
+        session: TestSession = TestSession(
+            chunk=config.chunk,
+            base_dir=config.base_dir,
+            experiment_name=config.exp_name,
+            render_factor=config.render_factor,
+        )
+        session.run(model=model, dataset=dataset, renderer=renderer)
+
 
 if __name__ == "__main__":
     config = Config()

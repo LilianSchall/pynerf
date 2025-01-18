@@ -1,6 +1,8 @@
 import configargparse
 
 class Config:
+    train: bool
+
     base_dir: str
     exp_name: str
     multires: int
@@ -17,6 +19,11 @@ class Config:
     white_bkgd: bool
     raw_noise_std: float
     lindisp: bool
+    chunk: int
+    render_factor: int
+
+    data_dir: str
+    half_res: bool
     def __init__(self):
         parser = configargparse.ArgumentParser()
 
@@ -27,7 +34,7 @@ class Config:
                             help='experiment name')
         parser.add_argument("--base_dir", type=str, default='./logs/', 
                             help='where to store ckpts and logs')
-        parser.add_argument("--datadir", type=str, default='./data/llff/fern', 
+        parser.add_argument("--data_dir", type=str, default='./data/llff/fern', 
                             help='input data directory')
 
         # training options
@@ -123,10 +130,21 @@ class Config:
         parser.add_argument("--i_video",   type=int, default=50000, 
                             help='frequency of render_poses video saving')
 
+        parser.add_argument("--train", action='store_true', 
+                            help='Launch training session')
+
+
         args = parser.parse_args()
 
+        self.train = args.train
+
+        # data config
         self.base_dir = args.base_dir
         self.exp_name = args.exp_name
+        self.data_dir = args.data_dir
+        self.half_res = args.half_res
+
+        # model config
         self.multires = args.multires
         self.net_depth = args.net_depth
         self.net_width = args.net_width
@@ -141,3 +159,7 @@ class Config:
         self.white_bkgd = args.white_bkgd
         self.raw_noise_std = args.raw_noise_std
         self.lindisp = args.lindisp
+
+        # session config
+        self.chunk = args.chunk
+        self.render_factor = args.render_factor

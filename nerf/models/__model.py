@@ -193,3 +193,8 @@ class Model:
             rgb_map = rgb_map + (1.0 - acc_map[..., None])
 
         return rgb_map, disp_map, acc_map, weights, depth_map
+    
+    def eval(self) -> None:
+        self.model.eval()
+        if self.model_fine is not None:
+            self.model_fine.eval()
