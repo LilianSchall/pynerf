@@ -94,7 +94,7 @@ class RayGenerator:
         cdf = torch.cat([torch.zeros_like(cdf[..., :1]), cdf], -1)
 
         if deterministic:
-            u: torch.Tensor = torch.linspace(0, 1, n_samples)
+            u: torch.Tensor = torch.linspace(0.0, 1.0, n_samples)
             u = u.expand(list(cdf.shape[:-1]) + [n_samples])
         else:
             u = torch.rand(list(cdf.shape[:-1]) + [n_samples])

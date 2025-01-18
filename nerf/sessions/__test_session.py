@@ -41,6 +41,8 @@ class TestSession:
                 focal=dataset.focal,
                 K=K,
                 chunk=self.chunk,
+                near=dataset.near,
+                far=dataset.far,
                 save_dir=self.save_path,
                 render_factor=self.render_factor,
             )

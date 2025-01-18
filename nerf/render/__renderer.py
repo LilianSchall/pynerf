@@ -112,7 +112,7 @@ class Renderer:
         near, far = bounds[..., 0], bounds[..., 1]
 
         t_vals: torch.Tensor = torch.linspace(
-            0.0, 1.0, steps=self.model.n_samples, device=rays.device
+            0.0, 1.0, steps=self.model.n_samples
         )
 
         if not self.model.lindisp:
@@ -174,7 +174,7 @@ class Renderer:
             ret["rgb0"] = rgb_map_0  # type: ignore
             ret["disp0"] = disp_map_0  # type: ignore
             ret["acc0"] = acc_map_0  # type: ignore
-            ret["z_std"] = torch.std(z_samples, -1, unbiased=False)  # type: ignore
+            ret["z_std"] = torch.std(z_samples, dim=-1, unbiased=False)  # type: ignore
 
         for k in ret:
             if torch.isnan(ret[k]).any() or torch.isinf(ret[k]).any():
@@ -190,6 +190,8 @@ class Renderer:
         focal: float,
         K: np.ndarray,
         chunk: int,
+        near: float,
+        far: float,
         save_dir: str | None = None,
         render_factor: int = 0,
     ) -> tuple[np.ndarray, np.ndarray]:
@@ -203,7 +205,7 @@ class Renderer:
         disps: list[np.ndarray] = []
 
         for i, c2w in enumerate(tqdm(render_poses)):
-            render_list, _ = self.render(H, W, K, c2w=c2w[:3, :4], chunk=chunk)
+            render_list, _ = self.render(H, W, K, near=near, far=far, c2w=c2w[:3, :4], chunk=chunk)
             assert len(render_list) == 3
             rgb, disp, acc = render_list
 

@@ -111,10 +111,10 @@ class Model:
             if self.model_fine is not None:
                 self.model_fine.load_state_dict(checkpoint["network_fine_state_dict"])
 
-    def batchify(self: "Model", embedded: torch.Tensor, netchunk: int) -> torch.Tensor:
+    def batchify(self: "Model", model: NeRF, embedded: torch.Tensor, netchunk: int) -> torch.Tensor:
         return torch.cat(
             [
-                self.model(embedded[i : i + netchunk])
+                model(embedded[i : i + netchunk])
                 for i in range(0, embedded.shape[0], netchunk)
             ],
             0,
@@ -137,14 +137,15 @@ class Model:
             embedded_dirs = self.embedder_views.embed(input_dirs_flat)
             embedded = torch.cat([embedded, embedded_dirs], dim=-1)
 
-        if netchunk is None:
-            outputs_flat: torch.Tensor = (
-                self.model(embedded)
-                if not use_fine or self.model_fine is None
-                else self.model_fine(embedded)
-            )
+        if use_fine and self.model_fine is not None:
+            model: NeRF = self.model_fine
         else:
-            outputs_flat: torch.Tensor = self.batchify(embedded, netchunk)
+            model: NeRF = self.model
+
+        if netchunk is None:
+            outputs_flat: torch.Tensor = model(embedded)        
+        else:
+            outputs_flat: torch.Tensor = self.batchify(model, embedded, netchunk)
 
         outputs: torch.Tensor = torch.reshape(
             outputs_flat, list(inputs.shape[:-1]) + [outputs_flat.shape[-1]]
