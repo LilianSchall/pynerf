@@ -45,6 +45,7 @@ class TestSession:
                 far=dataset.far,
                 save_dir=self.save_path,
                 render_factor=self.render_factor,
+                with_ndc=dataset.needs_ndc,
             )
 
             imageio.mimwrite(os.path.join(self.save_path, "video.mp4"), renderer.to8b(rgbs), fps=30, quality=8)  # type: ignore
