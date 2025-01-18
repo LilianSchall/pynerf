@@ -30,6 +30,7 @@ def main(config: Config) -> None:
     dataset: BlenderDataset = BlenderDataset(
         root_dir=config.data_dir,
         dataset_type="test",
+        white_bkgd=config.white_bkgd,
         half_res=config.half_res,
     )
 
