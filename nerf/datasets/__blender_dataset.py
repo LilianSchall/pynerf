@@ -69,7 +69,7 @@ class BlenderDataset(Dataset):
     near: float
     far: float
 
-    def __init__(self, root_dir: str, dataset_type: str, half_res: bool = True) -> None:
+    def __init__(self, root_dir: str, dataset_type: str, white_bkgd: bool, half_res: bool = True) -> None:
         self.near = 2.0
         self.far = 6.0
         with open(
@@ -108,6 +108,12 @@ class BlenderDataset(Dataset):
                 )
                 imgs_half_res.append(img.squeeze(0))
             self.images = imgs_half_res
+
+        for i in range(len(self.images)):
+            if white_bkgd:
+                self.images[i] = self.images[i][..., :3] * self.images[i][..., -1:] + (1.0 - self.images[i][..., -1:])
+            else:
+                self.images[i] = self.images[i][..., :3]
 
         self.index = 0
 
