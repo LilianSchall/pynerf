@@ -1,5 +1,8 @@
 import torch
 import numpy as np
+from tqdm import tqdm
+import imageio
+import os
 
 from .__ray_generator import RayGenerator
 from nerf.models import Model
@@ -19,7 +22,7 @@ class Renderer:
         H: int,
         W: int,
         K: np.ndarray,
-        rays: torch.Tensor,
+        rays: torch.Tensor | None = None,
         chunk: int = 1024 * 32,
         c2w: torch.Tensor | None = None,
         ndc: bool = True,
@@ -31,8 +34,10 @@ class Renderer:
 
         if c2w is not None:
             rays_o, rays_d = self.ray_generator.torch_rays(H, W, K, c2w)
-        else:
+        elif rays is not None:
             rays_o, rays_d = rays
+        else:
+            raise ValueError("Either c2w or rays must be provided")
 
         viewdirs: torch.Tensor | None = None
 
@@ -144,7 +149,7 @@ class Renderer:
                 z_vals_mid,
                 weights[..., 1:-1],
                 self.model.n_importance,
-                det=(self.model.perturb == 0.0),
+                deterministic=(self.model.perturb == 0.0),
             )
             z_samples = z_samples.detach()
 
@@ -166,10 +171,10 @@ class Renderer:
             ret["raw"] = raw
 
         if self.model.n_importance > 0:
-            ret["rgb0"] = rgb_map_0 # type: ignore
-            ret["disp0"] = disp_map_0 # type: ignore
-            ret["acc0"] = acc_map_0 # type: ignore
-            ret["z_std"] = torch.std(z_samples, -1, unbiased=False) # type: ignore
+            ret["rgb0"] = rgb_map_0  # type: ignore
+            ret["disp0"] = disp_map_0  # type: ignore
+            ret["acc0"] = acc_map_0  # type: ignore
+            ret["z_std"] = torch.std(z_samples, -1, unbiased=False)  # type: ignore
 
         for k in ret:
             if torch.isnan(ret[k]).any() or torch.isinf(ret[k]).any():
@@ -187,5 +192,31 @@ class Renderer:
         chunk: int,
         save_dir: str | None = None,
         render_factor: int = 0,
-    ) -> None:
-        pass
+    ) -> tuple[np.ndarray, np.ndarray]:
+
+        if render_factor != 0:
+            H = H // render_factor
+            W = W // render_factor
+            focal = focal / render_factor
+
+        rgbs: list[np.ndarray] = []
+        disps: list[np.ndarray] = []
+
+        for i, c2w in enumerate(tqdm(render_poses)):
+            render_list, _ = self.render(H, W, K, c2w=c2w[:3, :4], chunk=chunk)
+            assert len(render_list) == 3
+            rgb, disp, acc = render_list
+
+            rgbs.append(rgb.cpu().numpy())
+            disps.append(disp.cpu().numpy())
+
+            if save_dir is not None:
+                rgb8 = self.to8b(rgbs[-1])
+                filename = os.path.join(save_dir, f"{i:03d}.png")
+
+                imageio.imwrite(filename, rgb8)
+
+        return np.stack(rgbs, 0), np.stack(disps, 0)
+
+    def to8b(self, x: np.ndarray) -> np.ndarray:
+        return (255 * np.clip(x, 0, 1)).astype(np.uint8)
