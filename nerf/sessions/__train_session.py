@@ -37,7 +37,7 @@ class TrainSession:
         checkpoint_freq: int,
     ) -> None:
         self.chunk = chunk
-        self.save_path = os.path.join(base_dir, experiment_name, "rendering")
+        self.save_path = os.path.join(base_dir, experiment_name)
         os.makedirs(self.save_path, exist_ok=True)
         self.render_factor = render_factor
         self.batch_size = batch_size
@@ -221,7 +221,7 @@ class TrainSession:
             for param_group in model.optimizer.param_groups:
                 param_group["lr"] = new_learning_rate
 
-            if i % self.checkpoint_freq == 0:
+            if i % self.checkpoint_freq == 0 and i > 0:
                 path = os.path.join(self.save_path, f"model_{i}.tar")
                 torch.save(
                     {
@@ -236,5 +236,6 @@ class TrainSession:
                     },
                     path,
                 )
+                tqdm.write(f"[CHECKPOINT] saved model at: {path}")
 
             tqdm.write(f"[TRAINING] Iter: {i} Loss: {img_loss.item()}")
