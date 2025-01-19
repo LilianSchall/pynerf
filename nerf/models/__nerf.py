@@ -26,7 +26,6 @@ class NeRF(nn.Module):
         skips=[4],
         use_viewdirs=True,
     ):
-        print(f"will alpha linear be initialized?: {use_viewdirs}")
         super(NeRF, self).__init__()
         self.input_channel = input_channel
         self.input_channel_views = input_channel_views

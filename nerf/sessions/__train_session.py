@@ -53,6 +53,7 @@ class TrainSession:
     ) -> tuple[torch.Tensor, torch.Tensor | None]:
         rays_rgb: torch.Tensor | None = None
         if self.use_batching:
+            print(f"Shape of poses: {dataset.poses.shape}")
             rays: torch.Tensor = torch.stack(
                 [
                     torch.stack(
@@ -64,12 +65,17 @@ class TrainSession:
                     for pose in dataset.poses[:, :3, :4]
                 ],
                 dim=0,
-            ).to(device)
+            ).to("cpu")
+            print(f"Shape of rays: {rays.shape}")
+            print(f"Shape of images: {dataset.images.shape}")
             # TODO: check dimensions of dataset.images
-            rays_rgb = torch.concatenate([rays, dataset.images[None, :]], dim=1)
+            rays_rgb = torch.concatenate([rays, dataset.images[:, None]], dim=1)
+            print(f"Shape of rays_rgb: {rays_rgb.shape}")
             rays_rgb = rays_rgb.permute(0, 2, 3, 1, 4)
+            print(f"Shape of rays_rgb: {rays_rgb.shape}")
             rays_rgb = rays_rgb.reshape(-1, 3, 3)
-            idx: torch.Tensor = torch.randperm(rays_rgb.shape[0])
+            print(f"Shape of rays_rgb: {rays_rgb.shape}")
+            idx: torch.Tensor = torch.randperm(rays_rgb.shape[0], device="cpu")
             rays_rgb = rays_rgb[idx]
             rays_rgb = rays_rgb.to(device)
 
