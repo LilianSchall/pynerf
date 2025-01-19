@@ -1,4 +1,4 @@
-from .__embedder import Embedder
+from .__encoder import Encoder
 from .__nerf import NeRF
 
 import torch
@@ -9,8 +9,8 @@ import typing as t
 
 class Model:
     start: int
-    embedder: Embedder
-    embedder_views: Embedder | None
+    encoder: Encoder
+    encoder_views: Encoder | None
     model: NeRF
     model_fine: NeRF | None
     optimizer: torch.optim.Optimizer
@@ -47,8 +47,8 @@ class Model:
         skips: list[int] = [4]
         self.start = 0
 
-        self.embedder = Embedder(3, multires - 1, multires, True)
-        self.embedder_views = None
+        self.encoder = Encoder(3, multires - 1, multires, True)
+        self.encoder_views = None
         self.use_viewdirs = use_viewdirs
         self.n_importance = n_importance
         self.perturb = perturb
@@ -59,9 +59,9 @@ class Model:
         self.lindisp = lindisp
 
         if use_viewdirs and multires_views is not None:
-            self.embedder_views = Embedder(3, multires_views - 1, multires_views, True)
+            self.encoder_views = Encoder(3, multires_views - 1, multires_views, True)
 
-        input_channel = self.embedder.out_dim
+        input_channel = self.encoder.out_dim
         output_channel = 5 if n_importance > 0 else 4
 
         self.model = NeRF(
@@ -69,7 +69,7 @@ class Model:
             W=net_width,
             input_channel=input_channel,
             input_channel_views=(
-                0 if self.embedder_views is None else self.embedder_views.out_dim
+                0 if self.encoder_views is None else self.encoder_views.out_dim
             ),
             output_channel=output_channel,
             skips=skips,
@@ -86,7 +86,7 @@ class Model:
                 W=net_width_fine,
                 input_channel=input_channel,
                 input_channel_views=(
-                    0 if self.embedder_views is None else self.embedder_views.out_dim
+                    0 if self.encoder_views is None else self.encoder_views.out_dim
                 ),
                 output_channel=output_channel,
                 skips=skips,
@@ -119,12 +119,12 @@ class Model:
                 self.model_fine.load_state_dict(checkpoint["network_fine_state_dict"])
 
     def batchify(
-        self: "Model", model: NeRF, embedded: torch.Tensor, netchunk: int
+        self: "Model", model: NeRF, encoded: torch.Tensor, netchunk: int
     ) -> torch.Tensor:
         return torch.cat(
             [
-                model(embedded[i : i + netchunk])
-                for i in range(0, embedded.shape[0], netchunk)
+                model(encoded[i : i + netchunk])
+                for i in range(0, encoded.shape[0], netchunk)
             ],
             0,
         )
@@ -138,13 +138,13 @@ class Model:
     ) -> torch.Tensor:
         inputs_flat: torch.Tensor = torch.reshape(inputs, (-1, inputs.shape[-1]))
 
-        embedded = self.embedder.embed(inputs_flat)
+        encoded = self.encoder.encode(inputs_flat)
 
-        if viewdirs is not None and self.embedder_views is not None:
+        if viewdirs is not None and self.encoder_views is not None:
             input_dirs = viewdirs[:, None].expand(inputs.shape)
             input_dirs_flat = torch.reshape(input_dirs, (-1, input_dirs.shape[-1]))
-            embedded_dirs = self.embedder_views.embed(input_dirs_flat)
-            embedded = torch.cat([embedded, embedded_dirs], dim=-1)
+            encoded_dirs = self.encoder_views.encode(input_dirs_flat)
+            encoded = torch.cat([encoded, encoded_dirs], dim=-1)
 
         if use_fine and self.model_fine is not None:
             model: NeRF = self.model_fine
@@ -152,9 +152,9 @@ class Model:
             model: NeRF = self.model
 
         if netchunk is None:
-            outputs_flat: torch.Tensor = model(embedded)
+            outputs_flat: torch.Tensor = model(encoded)
         else:
-            outputs_flat: torch.Tensor = self.batchify(model, embedded, netchunk)
+            outputs_flat: torch.Tensor = self.batchify(model, encoded, netchunk)
 
         outputs: torch.Tensor = torch.reshape(
             outputs_flat, list(inputs.shape[:-1]) + [outputs_flat.shape[-1]]
