@@ -111,9 +111,7 @@ class Renderer:
         bounds: torch.Tensor = torch.reshape(rays[..., 6:8], [-1, 1, 2])
         near, far = bounds[..., 0], bounds[..., 1]
 
-        t_vals: torch.Tensor = torch.linspace(
-            0.0, 1.0, steps=self.model.n_samples
-        )
+        t_vals: torch.Tensor = torch.linspace(0.0, 1.0, steps=self.model.n_samples)
 
         if not self.model.lindisp:
             z_vals: torch.Tensor = near * (1.0 - t_vals) + far * t_vals
@@ -206,7 +204,16 @@ class Renderer:
         disps: list[np.ndarray] = []
 
         for i, c2w in enumerate(tqdm(render_poses)):
-            render_list, _ = self.render(H, W, K, near=near, far=far, c2w=c2w[:3, :4], with_ndc=with_ndc, chunk=chunk)
+            render_list, _ = self.render(
+                H,
+                W,
+                K,
+                near=near,
+                far=far,
+                c2w=c2w[:3, :4],
+                with_ndc=with_ndc,
+                chunk=chunk,
+            )
             assert len(render_list) == 3
             rgb, disp, acc = render_list
 

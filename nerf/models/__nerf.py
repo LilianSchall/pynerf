@@ -41,7 +41,9 @@ class NeRF(nn.Module):
                 for i in range(D - 1)
             ]
         )
-        self.views_linears = nn.ModuleList([nn.Linear(self.input_channel_views + W, W // 2)])
+        self.views_linears = nn.ModuleList(
+            [nn.Linear(self.input_channel_views + W, W // 2)]
+        )
 
         if use_viewdirs:
             self.feature_linear = nn.Linear(W, W)

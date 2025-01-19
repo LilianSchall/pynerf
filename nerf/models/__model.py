@@ -118,7 +118,9 @@ class Model:
                 print(f"Reloading checkpoint for model fine: {checkpoints[-1]}")
                 self.model_fine.load_state_dict(checkpoint["network_fine_state_dict"])
 
-    def batchify(self: "Model", model: NeRF, embedded: torch.Tensor, netchunk: int) -> torch.Tensor:
+    def batchify(
+        self: "Model", model: NeRF, embedded: torch.Tensor, netchunk: int
+    ) -> torch.Tensor:
         return torch.cat(
             [
                 model(embedded[i : i + netchunk])
@@ -150,7 +152,7 @@ class Model:
             model: NeRF = self.model
 
         if netchunk is None:
-            outputs_flat: torch.Tensor = model(embedded)        
+            outputs_flat: torch.Tensor = model(embedded)
         else:
             outputs_flat: torch.Tensor = self.batchify(model, embedded, netchunk)
 
@@ -203,7 +205,7 @@ class Model:
             rgb_map = rgb_map + (1.0 - acc_map[..., None])
 
         return rgb_map, disp_map, acc_map, weights, depth_map
-    
+
     def eval(self) -> None:
         self.model.eval()
         if self.model_fine is not None:

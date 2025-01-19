@@ -1,9 +1,10 @@
 from nerf.config import Config
 from nerf.models import Model
 from nerf.render import Renderer
-from nerf.sessions import TestSession
+from nerf.sessions import TestSession, TrainSession
 from nerf.datasets import BlenderDataset
 import torch
+
 
 def main(config: Config) -> None:
     model: Model = Model(
@@ -35,18 +36,31 @@ def main(config: Config) -> None:
     )
 
     if config.train:
-        pass
+        train_session: TrainSession = TrainSession(
+            chunk=config.chunk,
+            base_dir=config.base_dir,
+            experiment_name=config.exp_name,
+            render_factor=config.render_factor,
+            n_iters=config.n_iters,
+            batch_size=config.batch_size,
+            use_batching=config.use_batching,
+            learning_rate_decay=config.learning_rate_decay,
+            precrop_iters=config.precrop_iters,
+            precrop_frac=config.precrop_frac,
+            checkpoint_freq=config.checkpoint_freq,
+        )
+        train_session.run(model=model, dataset=dataset, renderer=renderer)
     else:
-        session: TestSession = TestSession(
+        test_session: TestSession = TestSession(
             chunk=config.chunk,
             base_dir=config.base_dir,
             experiment_name=config.exp_name,
             render_factor=config.render_factor,
         )
-        session.run(model=model, dataset=dataset, renderer=renderer)
+        test_session.run(model=model, dataset=dataset, renderer=renderer)
 
 
 if __name__ == "__main__":
-    torch.set_default_tensor_type('torch.cuda.FloatTensor')
+    torch.set_default_tensor_type("torch.cuda.FloatTensor")
     config = Config()
     main(config)
