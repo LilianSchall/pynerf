@@ -8,11 +8,13 @@ import typing as t
 
 
 class Model:
+    start: int
     embedder: Embedder
     embedder_views: Embedder | None
     model: NeRF
     model_fine: NeRF | None
     optimizer: torch.optim.Optimizer
+    learning_rate: float
     perturb: float
     n_importance: int
     device: str
@@ -43,6 +45,7 @@ class Model:
         lindisp: bool = False,
     ):
         skips: list[int] = [4]
+        self.start = 0
 
         self.embedder = Embedder(3, multires - 1, multires, True)
         self.embedder_views = None
@@ -91,6 +94,7 @@ class Model:
             ).to(device)
             grad_vars += list(self.model_fine.parameters())
 
+        self.learning_rate = learning_rate
         self.optimizer = torch.optim.Adam(
             params=grad_vars, lr=learning_rate, betas=(0.9, 0.999)
         )
@@ -106,6 +110,7 @@ class Model:
         if len(checkpoints) > 0:
             print(f"Reloading checkpoint for model: {checkpoints[-1]}")
             checkpoint = torch.load(checkpoints[-1])
+            self.start = checkpoint["global_step"]
             self.model.load_state_dict(checkpoint["network_fn_state_dict"])
             self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
@@ -203,3 +208,8 @@ class Model:
         self.model.eval()
         if self.model_fine is not None:
             self.model_fine.eval()
+
+    def train(self) -> None:
+        self.model.train()
+        if self.model_fine is not None:
+            self.model_fine.train()

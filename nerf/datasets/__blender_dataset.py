@@ -59,8 +59,8 @@ def pose_spherical_to_cartesian(
 
 
 class BlenderDataset(Dataset):
-    images: list[torch.Tensor]
-    poses: list[torch.Tensor]
+    images: torch.Tensor
+    poses: torch.Tensor
     H: int
     W: int
     focal: float
@@ -70,7 +70,9 @@ class BlenderDataset(Dataset):
     far: float
     needs_ndc: bool
 
-    def __init__(self, root_dir: str, dataset_type: str, white_bkgd: bool, half_res: bool = True) -> None:
+    def __init__(
+        self, root_dir: str, dataset_type: str, white_bkgd: bool, half_res: bool = True
+    ) -> None:
         self.near = 2.0
         self.far = 6.0
         self.needs_ndc = False
@@ -79,19 +81,18 @@ class BlenderDataset(Dataset):
         ) as file:
             meta = json.load(file)
 
-        self.images = []
-        self.poses = []
+        images: list[torch.Tensor] = []
+        poses: list[torch.Tensor] = []
 
         for frame in meta["frames"]:
             filename = os.path.join(root_dir, frame["file_path"] + ".png")
-            self.images.append(read_image(filename).float() / 255.0)
+            images.append(read_image(filename).float() / 255.0)
             # TODO: see if you can requires_grad = False
-            self.poses.append(torch.Tensor(frame["transform_matrix"]).float())  # type: ignore
+            poses.append(torch.Tensor(frame["transform_matrix"]).float())  # type: ignore
+
+        self.poses = torch.stack(poses, dim=0)
 
         self.H, self.W = self.images[0].shape[-2:]
-        print(f"Shape of image: {self.images[0].shape}")
-        print(f"H = {self.H}, W = {self.W}")
-        print(f"Shape of pose: {self.poses[0].shape}")
         camera_angle_x = meta["camera_angle_x"]
         self.focal = 0.5 * self.W / np.tan(0.5 * camera_angle_x)
 
@@ -100,29 +101,38 @@ class BlenderDataset(Dataset):
             pose_spherical_to_cartesian(angle, -30.0, 4.0)
             for angle in np.linspace(-180, 180, 40 + 1)[:-1]
         ]
-        print(f"Nb render poses: {len(self.render_poses)}")
-        print(f"Shape of render pose: {self.render_poses[0].shape}")
 
         if half_res:
+            print(
+                "Half resolution needed, values before are the following:"
+                + f" H = {self.H}, W = {self.W}, focal = {self.focal}"
+            )
             self.H //= 2
             self.W //= 2
             self.focal /= 2.0
 
-            print(f"Half resolution needed: H = {self.H}, W = {self.W}, focal = {self.focal}") 
-
-            imgs_half_res = []
-            for img in self.images:
-                img = torch.nn.functional.interpolate(
+            imgs_half_res: list[torch.Tensor] = []
+            for img in images:
+                img: torch.Tensor = torch.nn.functional.interpolate(
                     img.unsqueeze(0), (self.H, self.W)
                 )
                 imgs_half_res.append(img.squeeze(0))
-            self.images = imgs_half_res
+            images = imgs_half_res
 
-        for i in range(len(self.images)):
+        for i in range(len(images)):
             if white_bkgd:
-                self.images[i] = self.images[i][:3, ...] * self.images[i][-1:, ...] + (1.0 - self.images[i][-1:, ...])
+                images[i] = images[i][:3, ...] * images[i][-1:, ...] + (
+                    1.0 - images[i][-1:, ...]
+                )
             else:
-                self.images[i] = self.images[i][:3, ...]
+                images[i] = images[i][:3, ...]
+        self.images = torch.stack(images, dim=0)
+
+        print(f"Shape of images: {images.shape}")
+        print(f"H = {self.H}, W = {self.W}, focal={self.focal}")
+        print(f"Shape of poses: {self.poses.shape}")
+        print(f"Nb render poses: {len(self.render_poses)}")
+        print(f"Shape of render pose: {self.render_poses[0].shape}")
 
         self.index = 0
 
