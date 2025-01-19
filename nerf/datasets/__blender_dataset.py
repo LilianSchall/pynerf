@@ -92,7 +92,7 @@ class BlenderDataset(Dataset):
 
         self.poses = torch.stack(poses, dim=0)
 
-        self.H, self.W = self.images[0].shape[-2:]
+        self.H, self.W = images[0].shape[-2:]
         camera_angle_x = meta["camera_angle_x"]
         self.focal = 0.5 * self.W / np.tan(0.5 * camera_angle_x)
 
@@ -127,8 +127,9 @@ class BlenderDataset(Dataset):
             else:
                 images[i] = images[i][:3, ...]
         self.images = torch.stack(images, dim=0)
+        self.images = torch.permute(self.images, (0, 2, 3, 1))
 
-        print(f"Shape of images: {images.shape}")
+        print(f"Shape of images: {self.images.shape}")
         print(f"H = {self.H}, W = {self.W}, focal={self.focal}")
         print(f"Shape of poses: {self.poses.shape}")
         print(f"Nb render poses: {len(self.render_poses)}")

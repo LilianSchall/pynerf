@@ -17,7 +17,7 @@ class TrainSession:
 
     batch_size: int
     use_batching: bool
-    learning_rate_decay: float
+    learning_rate_decay: int
     precrop_iters: int
     precrop_frac: float
     checkpoint_freq: int
@@ -31,7 +31,7 @@ class TrainSession:
         batch_size: int,
         n_iters: int,
         use_batching: bool,
-        learning_rate_decay: float,
+        learning_rate_decay: int,
         precrop_iters: int,
         precrop_frac: float,
         checkpoint_freq: int,
@@ -103,11 +103,11 @@ class TrainSession:
                 rays_rgb = rays_rgb[rand_idx]
                 i_batch = 0
         else:
-            index: torch.Tensor = torch.randint(images.shape[0])
+            index: torch.Tensor = torch.randint(images.shape[0], size=(1,), device="cpu")
             target: torch.Tensor = images[index]
-            target = target.to(device)
+            target = target.squeeze(0).to(device)
 
-            pose: torch.Tensor = dataset.poses[index, :3, :4]
+            pose: torch.Tensor = dataset.poses[index, :3, :4].squeeze(0)
 
             rays_o, rays_d = renderer.ray_generator.torch_rays(
                 H=dataset.H, W=dataset.W, K=K, c2w=pose
