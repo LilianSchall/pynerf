@@ -11,6 +11,10 @@ The code in this repository is based on the original NeRF implementation by
 been however heavily refactored and modified for better readability and
 understanding.
 
+## Download the dataset
+Simply download the dataset on [Kaggle](https://www.kaggle.com/datasets/nguyenhung1903/nerf-synthetic-dataset).
+Then create a folder called `data/` and unzip the dataset in it.
+
 ## Run the code
 
 As of now, the code only supports training on the synthetic "Blender" dataset.
